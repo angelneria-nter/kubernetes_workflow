@@ -1,0 +1,20 @@
+name: Ejecutar Pruebas con Docker Compose
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  test-with-compose:
+    name: 🧪 Probar con Docker Compose
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v3
+
+      - name: Construir la imagen de la app
+        run: docker-compose build app
+
+      - name: Ejecutar pruebas con docker-compose run
+        run: docker-compose run --rm app mvn -B test
