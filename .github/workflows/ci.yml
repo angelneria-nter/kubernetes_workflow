@@ -33,12 +33,13 @@ jobs:
 
       - name: Ejecutar Pruebas y Empaquetar (Crear .jar)
 
-        run: mvn -B verify --file pom.xml
-        env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/test
-          SPRING_DATASOURCE_USERNAME: postgres
-          SPRING_DATASOURCE_PASSWORD: contrasena
-          SPRING_PROFILES_ACTIVE: test-ci
+        run: >
+          mvn -B verify --file pom.xml
+          -Dspring.datasource.url=jdbc:postgresql://localhost:5432/test
+          -Dspring.datasource.username=postgres
+          -Dspring.datasource.password=contrasena
+          -Dspring.jpa.hibernate.ddl-auto=create-drop
+          -Dspring.profiles.active=test-ci
 
       - name: Instalar Docker Compose
         run: |
