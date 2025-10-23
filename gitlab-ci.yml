@@ -1,0 +1,62 @@
+# --- INICIO DE .gitlab-ci.yml ---
+
+# Define las etapas del pipeline
+stages:
+  - test
+
+# Define la configuración del caché de Maven
+cache:
+  key:
+    files:
+      - pom.xml # El caché se reinicia si el pom.xml cambia
+  paths:
+    - .m2/repository # La carpeta de dependencias .m2
+
+# Trabajo de compilación y prueba
+build-and-test:
+  # Nombre legible para la UI de GitLab
+  name: 🏗️ Compilar y Probar con Base de Datos
+  stage: test
+
+  # Imagen de Docker que usará el runner (ya incluye Java 17 y Maven)
+  image: maven:3.9-eclipse-temurin-17
+
+  # "Servicios" es el equivalente a 'services:' en GitHub
+  # Inicia un contenedor de Postgres en la misma red que el trabajo
+  services:
+    - name: postgres:13
+      alias: postgres # ¡IMPORTANTE! Este será el hostname de la BD
+      variables:
+        # Tus variables de entorno para la BD
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: contrasena
+        POSTGRES_DB: test
+        # truco de GitLab CI: permite la conexión desde el runner
+        # sin problemas de autenticación de host
+        POSTGRES_HOST_AUTH_METHOD: trust
+
+  # Variables de entorno para el trabajo (equivalente al 'env:' de GitHub)
+  variables:
+    # ¡LA DIFERENCIA CLAVE!
+    # Usamos el 'alias' del servicio ('postgres') como hostname,
+    # no 'localhost'.
+    SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/test"
+    SPRING_DATASOURCE_USERNAME: "postgres"
+    SPRING_DATASOURCE_PASSWORD: "contrasena"
+    SPRING_PROFILES_ACTIVE: "test-ci"
+
+    # Asegura que Maven use el directorio de caché
+    MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
+  # El 'script' es el equivalente a 'steps.run'
+  # GitLab clona el repositorio automáticamente antes del script.
+  script:
+    - echo "Compilando y ejecutando pruebas..."
+    - mvn -B verify --file pom.xml
+
+  # 'rules' es el equivalente a 'on:' en GitHub
+  rules:
+    # Ejecuta este trabajo solo cuando hay un 'push'
+    # a la rama 'ci_cd_kubernetes'
+    - if: '$CI_COMMIT_BRANCH == "ci_cd_kubernetes" && $CI_PIPELINE_SOURCE == "push"'
+
