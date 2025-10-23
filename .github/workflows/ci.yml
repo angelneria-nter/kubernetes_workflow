@@ -6,12 +6,20 @@ on:
 
 jobs:
   test-with-compose:
-    name: 🧪 Probar con Docker Compose
+    name: Probar con Docker Compose
     runs-on: ubuntu-latest
 
     steps:
       - name: Clonar repositorio
         uses: actions/checkout@v3
+
+      - name: Cachear repositorio de Maven
+        uses: actions/cache@v3
+        with:
+            path: ~/.m2/repository
+            key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+            restore-keys: |
+              ${{ runner.os }}-maven-
 
       - name: Instalar Docker Compose
         run: |
